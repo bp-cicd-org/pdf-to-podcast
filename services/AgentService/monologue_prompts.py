@@ -1,6 +1,17 @@
+"""
+Module containing prompt templates and utilities for generating monologue podcasts.
+
+This module provides a collection of prompt templates used to guide LLM responses
+when generating podcast monologues from PDF documents. It includes templates for
+summarization, synthesis, transcript generation, and dialogue formatting.
+"""
+
 import jinja2
 from typing import Dict
 
+# Template for summarizing individual PDF documents
+# This template guides the LLM to analyze a document focusing on key metrics,
+# trends, context and data accuracy while ensuring proper text formatting
 MONOLOGUE_SUMMARY_PROMPT_STR = """
 You are a knowledgeable analyst. Please provide a targeted analysis of the following document, focusing on: {{ focus }}
 
@@ -40,6 +51,9 @@ Condense the information into metrics easily digestible on a audiobook format wi
 You are presenting to the board of directors. Speak in a way that is engaging and informative, but not too technical and speak in the first person.
 """
 
+# Template for synthesizing multiple document summaries into an outline
+# This template guides the LLM to create a structured monologue outline by combining
+# multiple document summaries while maintaining proper timing and formatting
 MONOLOGUE_MULTI_DOC_SYNTHESIS_PROMPT_STR = """
 Create a structured monologue outline synthesizing the following document summaries. The monologue should be 30-45 seconds long.
 
@@ -80,6 +94,9 @@ Requirements:
 
 Output a structured outline that synthesizes insights across all documents, emphasizing Target Documents while using Context Documents for support."""
 
+# Template for generating the actual monologue transcript
+# This template guides the LLM to create a focused update based on the outline and source
+# documents while following specific duration, structure and formatting requirements
 MONOLOGUE_TRANSCRIPT_PROMPT_STR = """
 Create a focused update based on this outline and source documents.
 
@@ -129,6 +146,9 @@ Requirements:
 
 Create a concise, engaging monologue that follows the outline while delivering essential financial information."""
 
+# Template for converting monologue to structured dialogue format
+# This template guides the LLM to convert a financial monologue into a structured JSON format
+# while maintaining proper formatting and data accuracy
 MONOLOGUE_DIALOGUE_PROMPT_STR = """You are tasked with converting a financial monologue into a structured JSON format. You have:
 
 1. Speaker information:
@@ -160,6 +180,7 @@ You absolutely must, without exception:
 
 Please output the JSON following the provided schema, maintaining all financial details and proper formatting. The output should use proper Unicode characters directly, not escaped sequences. Do not output anything besides the JSON."""
 
+# Dictionary mapping template names to their content
 PROMPT_TEMPLATES = {
     "monologue_summary_prompt": MONOLOGUE_SUMMARY_PROMPT_STR,
     "monologue_multi_doc_synthesis_prompt": MONOLOGUE_MULTI_DOC_SYNTHESIS_PROMPT_STR,
@@ -167,20 +188,57 @@ PROMPT_TEMPLATES = {
     "monologue_dialogue_prompt": MONOLOGUE_DIALOGUE_PROMPT_STR,
 }
 
-# Create Jinja templates once
+# Create Jinja templates once for efficiency
 TEMPLATES: Dict[str, jinja2.Template] = {
     name: jinja2.Template(template) for name, template in PROMPT_TEMPLATES.items()
 }
 
 
 class FinancialSummaryPrompts:
+    """
+    A class providing access to financial summary prompt templates.
+    
+    This class serves as an interface to access and render various prompt templates
+    used in the monologue generation process. Templates are accessed either through
+    attribute access or the get_template class method.
+
+    Attributes:
+        None
+
+    Methods:
+        __getattr__(name: str) -> str: Dynamically retrieves prompt template strings by name
+        get_template(name: str) -> jinja2.Template: Retrieves compiled Jinja templates by name
+    """
+
     def __getattr__(self, name: str) -> str:
-        """Dynamically handle prompt requests by name"""
+        """
+        Dynamically handle prompt requests by name.
+
+        Args:
+            name (str): Name of the prompt template to retrieve
+
+        Returns:
+            str: The prompt template string
+
+        Raises:
+            AttributeError: If the requested template name doesn't exist
+        """
         if name in PROMPT_TEMPLATES:
             return PROMPT_TEMPLATES[name]
         raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
     @classmethod
     def get_template(cls, name: str) -> jinja2.Template:
-        """Get the Jinja template by name"""
+        """
+        Get the compiled Jinja template by name.
+
+        Args:
+            name (str): Name of the template to retrieve
+
+        Returns:
+            jinja2.Template: The compiled Jinja template object
+
+        Raises:
+            KeyError: If the requested template name doesn't exist
+        """
         return TEMPLATES[name]

@@ -1,3 +1,23 @@
+"""
+Main FastAPI application module for the AI Research Assistant API Service.
+
+This module provides the core API endpoints for the PDF-to-Podcast service, handling:
+- PDF file uploads and processing
+- WebSocket status updates
+- Job management and status tracking
+- Saved podcast retrieval and management
+- Vector database querying
+- Service health monitoring
+
+The service integrates with:
+- PDF Service for document processing
+- Agent Service for content generation
+- TTS Service for audio synthesis
+- Redis for caching and pub/sub
+- MinIO for file storage
+- OpenTelemetry for observability
+"""
+
 from fastapi import (
     HTTPException,
     FastAPI,
@@ -100,6 +120,19 @@ logger.info(f"CORS configured with allowed origins: {allowed_origins}")
 
 @app.websocket("/ws/status/{job_id}")
 async def websocket_endpoint(websocket: WebSocket, job_id: str):
+    """
+    WebSocket endpoint for real-time job status updates.
+    
+    Handles client connections and sends status updates for all services processing a job.
+    Implements a ready-check protocol and maintains connection with periodic pings.
+    
+    Args:
+        websocket (WebSocket): The WebSocket connection instance
+        job_id (str): Unique identifier for the job to track
+        
+    Raises:
+        WebSocketDisconnect: If the client disconnects
+    """
     try:
         # Accept the WebSocket connection
         await manager.connect(websocket, job_id)
@@ -166,6 +199,20 @@ def process_pdf_task(
     files_and_types: List[Tuple[bytes, str]],
     transcription_params: TranscriptionParams,
 ):
+    """
+    Process PDF files through the conversion pipeline.
+    
+    Coordinates the workflow between PDF Service, Agent Service, and TTS Service
+    to convert PDFs into an audio podcast.
+    
+    Args:
+        job_id (str): Unique identifier for the job
+        files_and_types (List[Tuple[bytes, str]]): List of tuples containing file content and type (target/context)
+        transcription_params (TranscriptionParams): Parameters controlling the transcription process
+        
+    Raises:
+        Exception: If any service in the pipeline fails
+    """
     with telemetry.tracer.start_as_current_span("api.process_pdf_task") as span:
         span.set_attribute("job_id", job_id)
         try:
@@ -305,6 +352,21 @@ async def process_pdf(
     context_files: Union[UploadFile, List[UploadFile]] = File([]),
     transcription_params: str = Form(...),
 ):
+    """
+    Process uploaded PDF files and generate a podcast.
+    
+    Args:
+        background_tasks (BackgroundTasks): FastAPI background tasks handler
+        target_files (Union[UploadFile, List[UploadFile]]): Primary PDF file(s) to process
+        context_files (Union[UploadFile, List[UploadFile]], optional): Supporting PDF files
+        transcription_params (str): JSON string containing transcription parameters
+        
+    Returns:
+        dict: Contains job_id for tracking the processing status
+        
+    Raises:
+        HTTPException: If file validation fails or parameters are invalid
+    """
     with telemetry.tracer.start_as_current_span("api.process_pdf") as span:
         # Convert single file to list for consistent handling
         target_files_list = (
@@ -368,7 +430,19 @@ async def process_pdf(
 # TODO: wire up userId auth here
 @app.get("/status/{job_id}")
 async def get_status(job_id: str, userId: str = Query(..., description="KAS User ID")):
-    """Get aggregated status from all services"""
+    """
+    Get aggregated status from all services for a specific job.
+    
+    Args:
+        job_id (str): Job identifier to check status for
+        userId (str): User identifier for authorization
+        
+    Returns:
+        dict: Status information from all services
+        
+    Raises:
+        HTTPException: If job is not found
+    """
     with telemetry.tracer.start_as_current_span("api.job.status") as span:
         span.set_attribute("job_id", job_id)
         statuses = {}
@@ -392,7 +466,19 @@ async def get_status(job_id: str, userId: str = Query(..., description="KAS User
 
 @app.get("/output/{job_id}")
 async def get_output(job_id: str, userId: str = Query(..., description="KAS User ID")):
-    """Get the final TTS output"""
+    """
+    Get the final TTS output for a completed job.
+    
+    Args:
+        job_id (str): Job identifier to get output for
+        userId (str): User identifier for authorization
+        
+    Returns:
+        Response: Audio file response with appropriate headers
+        
+    Raises:
+        HTTPException: If result is not found or TTS not completed
+    """
     with telemetry.tracer.start_as_current_span("api.job.output") as span:
         span.set_attribute("job_id", job_id)
 
@@ -427,7 +513,14 @@ async def get_output(job_id: str, userId: str = Query(..., description="KAS User
 
 @app.post("/cleanup")
 async def cleanup_jobs():
-    """Clean up old jobs across all services"""
+    """
+    Clean up old jobs across all services.
+    
+    Removes job status and result data from Redis for all services.
+    
+    Returns:
+        dict: Number of jobs removed
+    """
     removed = 0
     for service in ServiceType:
         pattern = f"status:*:{service}"
@@ -443,7 +536,18 @@ async def cleanup_jobs():
 async def get_saved_podcasts(
     userId: str = Query(..., description="KAS User ID", min_length=1),
 ):
-    """Get a list of all saved podcasts from storage with their audio data"""
+    """
+    Get a list of all saved podcasts from storage with their audio data.
+    
+    Args:
+        userId (str): User identifier to filter podcasts
+        
+    Returns:
+        Dict[str, List[SavedPodcast]]: List of saved podcasts metadata
+        
+    Raises:
+        HTTPException: If retrieval fails
+    """
     try:
         with telemetry.tracer.start_as_current_span("api.saved_podcasts") as span:
             if not userId.strip():  # Check for whitespace-only strings
@@ -478,7 +582,19 @@ async def get_saved_podcasts(
 async def get_saved_podcast_metadata(
     job_id: str, userId: str = Query(..., description="KAS User ID")
 ):
-    """Get a specific saved podcast metadata without audio data"""
+    """
+    Get a specific saved podcast metadata without audio data.
+    
+    Args:
+        job_id (str): Job identifier for the podcast
+        userId (str): User identifier for authorization
+        
+    Returns:
+        SavedPodcast: Podcast metadata
+        
+    Raises:
+        HTTPException: If podcast not found or retrieval fails
+    """
     try:
         with telemetry.tracer.start_as_current_span(
             "api.saved_podcast.metadata"
@@ -511,7 +627,19 @@ async def get_saved_podcast_metadata(
 async def get_saved_podcast(
     job_id: str, userId: str = Query(..., description="KAS User ID")
 ):
-    """Get a specific saved podcast with its audio data"""
+    """
+    Get a specific saved podcast with its audio data.
+    
+    Args:
+        job_id (str): Job identifier for the podcast
+        userId (str): User identifier for authorization
+        
+    Returns:
+        SavedPodcastWithAudio: Podcast metadata and audio content
+        
+    Raises:
+        HTTPException: If podcast not found or retrieval fails
+    """
     try:
         with telemetry.tracer.start_as_current_span("api.saved_podcast.audio") as span:
             span.set_attribute("job_id", job_id)
@@ -556,7 +684,19 @@ async def get_saved_podcast(
 async def get_saved_podcast_transcript(
     job_id: str, userId: str = Query(..., description="KAS User ID")
 ):
-    """Get a specific saved podcast transcript"""
+    """
+    Get a specific saved podcast transcript.
+    
+    Args:
+        job_id (str): Job identifier for the podcast
+        userId (str): User identifier for authorization
+        
+    Returns:
+        Conversation: Podcast transcript data
+        
+    Raises:
+        HTTPException: If transcript not found or invalid format
+    """
     with telemetry.tracer.start_as_current_span("api.saved_podcast.transcript") as span:
         try:
             span.set_attribute("job_id", job_id)
@@ -590,7 +730,19 @@ async def get_saved_podcast_transcript(
 async def get_saved_podcast_agent_workflow(
     job_id: str, userId: str = Query(..., description="KAS User ID")
 ):
-    """Get a specific saved podcast agent workflow"""
+    """
+    Get a specific saved podcast agent workflow history.
+    
+    Args:
+        job_id (str): Job identifier for the podcast
+        userId (str): User identifier for authorization
+        
+    Returns:
+        PromptTracker: Agent workflow history data
+        
+    Raises:
+        HTTPException: If history not found or retrieval fails
+    """
     with telemetry.tracer.start_as_current_span("api.saved_podcast.history") as span:
         try:
             span.set_attribute("job_id", job_id)
@@ -618,7 +770,19 @@ async def get_saved_podcast_agent_workflow(
 async def get_saved_podcast_pdf(
     job_id: str, userId: str = Query(..., description="KAS User ID")
 ):
-    """Get the original PDF file for a specific podcast"""
+    """
+    Get the original PDF file for a specific podcast.
+    
+    Args:
+        job_id (str): Job identifier for the podcast
+        userId (str): User identifier for authorization
+        
+    Returns:
+        Response: PDF file response with appropriate headers
+        
+    Raises:
+        HTTPException: If PDF not found or retrieval fails
+    """
     with telemetry.tracer.start_as_current_span("api.saved_podcast.pdf") as span:
         try:
             span.set_attribute("job_id", job_id)

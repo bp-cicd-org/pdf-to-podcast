@@ -1,3 +1,10 @@
+"""
+Podcast flow module for converting PDFs to podcast conversations.
+
+This module handles the workflow for generating multi-speaker podcast content from PDF documents.
+It includes functionality for summarizing PDFs, generating outlines, and creating dialogue segments.
+"""
+
 from shared.pdf_types import PDFMetadata
 from shared.podcast_types import Conversation, PodcastOutline
 from shared.api_types import JobStatus, TranscriptionRequest
@@ -15,7 +22,9 @@ import asyncio
 async def podcast_summarize_pdf(
     pdf_metadata: PDFMetadata, llm_manager: LLMManager, prompt_tracker: PromptTracker
 ) -> AIMessage:
-    """Summarize a single PDF document"""
+    """
+    Summarize a single PDF document using the LLM.
+    """
     template = PodcastPrompts.get_template("podcast_summary_prompt")
     prompt = template.render(text=pdf_metadata.markdown)
 
@@ -40,7 +49,9 @@ async def podcast_summarize_pdfs(
     job_manager: JobStatusManager,
     logger: logging.Logger,
 ) -> List[PDFMetadata]:
-    """Summarize all PDFs in the request"""
+    """
+    Summarize all PDFs in parallel and update their metadata with summaries.
+    """
     job_manager.update_status(
         job_id, JobStatus.PROCESSING, f"Summarizing {len(pdfs)} PDFs"
     )
@@ -66,7 +77,9 @@ async def podcast_generate_raw_outline(
     job_manager: JobStatusManager,
     logger: logging.Logger,
 ) -> str:
-    """Generate initial raw outline from summarized PDFs"""
+    """
+    Generate initial raw outline from summarized PDFs.
+    """
     # Prepare document summaries in XML format
     job_manager.update_status(
         job_id, JobStatus.PROCESSING, "Generating initial outline"
@@ -114,7 +127,9 @@ async def podcast_generate_structured_outline(
     job_manager: JobStatusManager,
     logger: logging.Logger,
 ) -> PodcastOutline:
-    """Convert raw outline to structured format"""
+    """
+    Convert raw outline text to structured PodcastOutline format.
+    """
     job_manager.update_status(
         job_id,
         JobStatus.PROCESSING,
@@ -157,7 +172,9 @@ async def podcast_process_segment(
     llm_manager: LLMManager,
     prompt_tracker: PromptTracker,
 ) -> tuple[str, str]:
-    """Process a single segment"""
+    """
+    Process a single outline segment to generate initial content.
+    """
     # Get reference content if it exists
     text_content = []
     if segment.references:
@@ -215,7 +232,9 @@ async def podcast_process_segments(
     job_manager: JobStatusManager,
     logger: logging.Logger,
 ) -> Dict[str, str]:
-    """Process each segment in the outline"""
+    """
+    Process all outline segments in parallel to generate initial content.
+    """
     # Create tasks for processing each segment
     segment_tasks: List[Coroutine] = []
     for idx, segment in enumerate(outline.segments):
@@ -249,7 +268,9 @@ async def podcast_generate_dialogue_segment(
     llm_manager: LLMManager,
     prompt_tracker: PromptTracker,
 ) -> Dict[str, str]:
-    """Generate dialogue for a single segment"""
+    """
+    Generate dialogue for a single segment.
+    """
     # Format topics for prompt
     topics_text = "\n".join(
         [
@@ -297,7 +318,9 @@ async def podcast_generate_dialogue(
     job_manager: JobStatusManager,
     logger: logging.Logger,
 ) -> List[Dict[str, str]]:
-    """Generate dialogue for each segment"""
+    """
+    Generate dialogue for all segments in parallel.
+    """
     job_manager.update_status(job_id, JobStatus.PROCESSING, "Generating dialogue")
 
     # Create tasks for generating dialogue for each segment
@@ -346,7 +369,9 @@ async def podcast_combine_dialogues(
     job_manager: JobStatusManager,
     logger: logging.Logger,
 ) -> str:
-    """Iteratively combine dialogue segments into a cohesive conversation"""
+    """
+    Iteratively combine dialogue segments into a cohesive conversation.
+    """
     job_manager.update_status(
         job_id, JobStatus.PROCESSING, "Combining dialogue segments"
     )
@@ -405,7 +430,9 @@ async def podcast_create_final_conversation(
     job_manager: JobStatusManager,
     logger: logging.Logger,
 ) -> Conversation:
-    """Convert the dialogue into structured Conversation format"""
+    """
+    Convert the dialogue into structured Conversation format.
+    """
     job_manager.update_status(
         job_id, JobStatus.PROCESSING, "Formatting final conversation"
     )
@@ -444,6 +471,8 @@ async def podcast_create_final_conversation(
 
 
 def unescape_unicode_string(s: str) -> str:
-    """Convert escaped Unicode sequences to actual Unicode characters"""
+    """
+    Convert escaped Unicode sequences to actual Unicode characters.
+    """
     # This handles both raw strings (with extra backslashes) and regular strings
     return s.encode("utf-8").decode("unicode-escape")

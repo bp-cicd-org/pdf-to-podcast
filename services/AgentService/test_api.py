@@ -1,3 +1,10 @@
+"""
+Test module for the Agent Service API endpoints.
+
+This module contains integration tests for the transcription API endpoints,
+verifying the full workflow from request submission to job completion.
+"""
+
 import requests
 import ujson as json
 import os
@@ -7,6 +14,18 @@ from shared.pdf_types import PDFMetadata
 
 
 def test_transcribe_api():
+    """
+    Test the transcription API workflow.
+    
+    This test function:
+    1. Creates a TranscriptionRequest with sample PDF metadata
+    2. Submits the request to the transcribe endpoint
+    3. Polls the job status until completion
+    4. Verifies the job completes successfully
+    
+    Raises:
+        AssertionError: If any step of the workflow fails or times out
+    """
     # API endpoints
     BASE_URL = os.getenv("AGENT_SERVICE_URL", "http://localhost:8964")
     TRANSCRIBE_URL = f"{BASE_URL}/transcribe"

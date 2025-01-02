@@ -1,6 +1,15 @@
+"""
+Module containing prompt templates and utilities for generating podcast dialogues.
+
+This module provides a collection of prompt templates used to guide LLM responses
+when generating podcast dialogues from PDF documents. It includes templates for
+summarization, outline generation, transcript creation, and dialogue formatting.
+"""
+
 import jinja2
 from typing import Dict
 
+# Template for summarizing individual PDF documents
 PODCAST_SUMMARY_PROMPT_STR = """
 Please provide a comprehensive summary of the following document. Note that this document may contain OCR/PDF conversion artifacts, so please interpret the content, especially numerical data and tables, with appropriate context.
 
@@ -35,6 +44,7 @@ Please format the summary using markdown, with appropriate headers, lists, and e
 Note: Focus on extracting and organizing the most essential information while ensuring no critical details are omitted. Maintain the original document's tone and context in your summary.
 """
 
+# Template for synthesizing multiple document summaries into an outline
 PODCAST_MULTI_PDF_OUTLINE_PROMPT_STR = """
 Create a structured podcast outline synthesizing the following document summaries. The podcast should be {{total_duration}} minutes long.
 
@@ -70,6 +80,7 @@ Requirements:
 Ensure the outline creates a cohesive narrative that emphasizes the Target Documents while using Context Documents to provide additional depth and background information.
 """
 
+# Template for converting outline into structured JSON format
 PODCAST_MULTI_PDF_STRUCUTRED_OUTLINE_PROMPT_STR = """
 Convert the following outline into a structured JSON format. The final section should be marked as the conclusion segment.
 
@@ -100,6 +111,7 @@ The result must conform to the following JSON schema:
 {{ schema }}
 """
 
+# Template for generating transcript with source references
 PODCAST_PROMPT_WITH_REFERENCES_STR = """
 Create a transcript incorporating details from the provided source material:
 
@@ -129,6 +141,7 @@ Requirements:
 Ensure thorough coverage of each topic while preserving the accuracy and nuance of the source material.
 """
 
+# Template for generating transcript without source references
 PODCAST_PROMPT_NO_REFERENCES_STR = """
 Create a knowledge-based transcript following this outline:
 
@@ -162,6 +175,7 @@ Parameters:
 Develop a thorough exploration of each topic using available knowledge. Begin with careful brainstorming to map connections between ideas, then build a clear narrative that makes complex concepts accessible while maintaining accuracy and completeness.
 """
 
+# Template for converting transcript to dialogue format
 PODCAST_TRANSCRIPT_TO_DIALOGUE_PROMPT_STR = """
 Your task is to transform the provided input transcript into an engaging and informative podcast dialogue.
 
@@ -221,6 +235,7 @@ You should keep all analogies, stories, examples, and quotes from the transcript
 *Only return the full dialogue transcript; do not include any other information like time budget or segment names.*
 """
 
+# Template for combining multiple dialogue sections
 PODCAST_COMBINE_DIALOGUES_PROMPT_STR = """You are revising a podcast transcript to make it more engaging while preserving its content and structure. You have access to three key elements:
 
 1. The podcast outline
@@ -257,6 +272,7 @@ Key guidelines:
 
 Please output the complete revised dialogue transcript from the beginning, with the next section integrated seamlessly."""
 
+# Template for converting dialogue to JSON format
 PODCAST_DIALOGUE_PROMPT_STR = """You are tasked with converting a podcast transcript into a structured JSON format. You have:
 
 1. Two speakers:
@@ -289,6 +305,7 @@ You absolutely must, without exception:
 
 Please output the JSON following the provided schema, maintaining all conversational details and speaker attributions. The output should use proper Unicode characters directly, not escaped sequences. Do not output anything besides the JSON."""
 
+# Dictionary mapping prompt names to their template strings
 PROMPT_TEMPLATES = {
     "podcast_summary_prompt": PODCAST_SUMMARY_PROMPT_STR,
     "podcast_multi_pdf_outline_prompt": PODCAST_MULTI_PDF_OUTLINE_PROMPT_STR,
@@ -307,13 +324,25 @@ TEMPLATES: Dict[str, jinja2.Template] = {
 
 
 class PodcastPrompts:
+    """
+    A class providing access to podcast-related prompt templates.
+    
+    This class manages a collection of Jinja2 templates used for generating
+    various prompts in the podcast creation process, from PDF summarization
+    to dialogue generation.
+    """
+    
     def __getattr__(self, name: str) -> str:
-        """Dynamically handle prompt requests by name"""
+        """
+        Dynamically retrieve prompt templates by name.
+        """
         if name in PROMPT_TEMPLATES:
             return PROMPT_TEMPLATES[name]
         raise AttributeError(f"'{self.__class__.__name__}' has no attribute '{name}'")
 
     @classmethod
     def get_template(cls, name: str) -> jinja2.Template:
-        """Get the Jinja template by name"""
+        """
+        Get a Jinja2 template by name.
+        """
         return TEMPLATES[name]

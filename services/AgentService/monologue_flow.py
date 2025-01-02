@@ -1,15 +1,22 @@
-from shared.api_types import JobStatus, TranscriptionRequest
-from shared.podcast_types import Conversation
-from shared.pdf_types import PDFMetadata
-from shared.llmmanager import LLMManager
-from shared.job import JobStatusManager
-from typing import List, Dict
-import ujson as json
-import logging
-from shared.prompt_tracker import PromptTracker
-from monologue_prompts import FinancialSummaryPrompts
-from langchain_core.messages import AIMessage
-import asyncio
+"""
+Monologue flow module for converting PDFs to podcast monologues.
+
+This module handles the workflow for generating single-speaker podcast content from PDF documents.
+It includes functionality for summarizing PDFs, generating outlines, and creating monologue scripts.
+"""
+
+from shared.api_types import JobStatus, TranscriptionRequest  # Job status tracking and request types
+from shared.podcast_types import Conversation  # Podcast conversation data structures
+from shared.pdf_types import PDFMetadata  # PDF document metadata and content
+from shared.llmmanager import LLMManager  # LLM interaction management
+from shared.job import JobStatusManager  # Background job status tracking
+from typing import List, Dict  # Type hints
+import ujson as json  # Fast JSON processing
+import logging  # Logging utilities
+from shared.prompt_tracker import PromptTracker  # Tracks prompts sent to LLM
+from monologue_prompts import FinancialSummaryPrompts  # Prompt templates
+from langchain_core.messages import AIMessage  # LLM message type
+import asyncio  # Async functionality
 
 
 async def monologue_summarize_pdf(
