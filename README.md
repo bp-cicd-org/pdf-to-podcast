@@ -6,12 +6,10 @@ This NVIDIA AI blueprint shows developers how to build a microservice that trans
 
 <img width="1021" alt="Screenshot 2024-12-30 at 8 43 43 PM" src="https://github.com/user-attachments/assets/604d0b4d-664f-4089-a30d-0431ff35aece" />
 
-[mermaid diagram](docs/README.md)
-
 ## Quick Start Guide
 
 1. **Set environment variables**
-   
+
    ```bash
    # Create .env file with required variables
    echo "ELEVENLABS_API_KEY=your_key" > .env
