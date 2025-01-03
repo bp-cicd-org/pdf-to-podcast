@@ -63,16 +63,16 @@ Install software requirements:
 
 2. **Obtain API keys:**
 
-- NVIDIA Inference Microservices (NIM)
-   - There are two possible methods to generate an API key for NIM:
-      - Sign in to the [NVIDIA Build](https://build.nvidia.com/explore/discover?signin=true) portal with your email.
-         - Click on any [model](https://build.nvidia.com/meta/llama-3_1-70b-instruct), then click "Get API Key", and finally click "Generate Key".
-      - Sign in to the [NVIDIA NGC](https://ngc.nvidia.com/) portal with your email.
-         - Select your organization from the dropdown menu after logging in. You must select an organization which has NVIDIA AI Enterprise (NVAIE) enabled.
-         - Click on your account in the top right, select "Setup" from the dropdown.
-         - Click the "Generate Personal Key" option and then the "+ Generate Personal Key" button to create your API key.
-            - This will be used in the NVIDIA_API_KEY environment variable.
-         - Click the "Generate API Key" option and then the "+ Generate API Key" button to create the API key.
+NVIDIA Inference Microservices (NIM)
+- There are two possible methods to generate an API key for NIM:
+   - Sign in to the [NVIDIA Build](https://build.nvidia.com/explore/discover?signin=true) portal with your email.
+      - Click on any [model](https://build.nvidia.com/meta/llama-3_1-70b-instruct), then click "Get API Key", and finally click "Generate Key".
+   - Sign in to the [NVIDIA NGC](https://ngc.nvidia.com/) portal with your email.
+      - Select your organization from the dropdown menu after logging in. You must select an organization which has NVIDIA AI Enterprise (NVAIE) enabled.
+      - Click on your account in the top right, select "Setup" from the dropdown.
+      - Click the "Generate Personal Key" option and then the "+ Generate Personal Key" button to create your API key.
+         - This will be used in the NVIDIA_API_KEY environment variable.
+      - Click the "Generate API Key" option and then the "+ Generate API Key" button to create the API key.
 
 IMPORTANT:  This will be used in the NVIDIA_API_KEY environment variable below.
 
