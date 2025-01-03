@@ -76,7 +76,7 @@ NVIDIA Inference Microservices (NIM)
 
 IMPORTANT:  This will be used in the NVIDIA_API_KEY environment variable below.
 
-- [ElevenLabs](https://elevenlabs.io/docs/api-reference/authentication)
+[ElevenLabs](https://elevenlabs.io/docs/api-reference/authentication)
 
 3. **Clone the repo**
 
