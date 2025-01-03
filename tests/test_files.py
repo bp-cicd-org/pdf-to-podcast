@@ -1,3 +1,9 @@
+"""Test module for transcript and prompt history retrieval endpoints.
+
+This module contains test functions to verify the functionality of the transcript
+and prompt history retrieval endpoints of the PDF-to-Podcast API service.
+"""
+
 import requests
 import os
 from datetime import datetime
@@ -8,6 +14,14 @@ JOB_ID = "1730947535"
 
 
 def test_transcript():
+    """Test the transcript retrieval endpoint.
+    
+    Makes a GET request to retrieve the transcript for a specific job ID.
+    Prints the transcript content if successful, otherwise prints error details.
+    
+    Environment Variables:
+        API_SERVICE_URL: Base URL of the API service (default: http://localhost:8002)
+    """
     base_url = os.getenv("API_SERVICE_URL", "http://localhost:8002")
     print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Testing transcript endpoint...")
     print(f"Job ID: {JOB_ID}")
@@ -33,6 +47,14 @@ def test_transcript():
 
 
 def test_prompt_tracker():
+    """Test the prompt history retrieval endpoint.
+    
+    Makes a GET request to retrieve the prompt generation history for a specific job ID.
+    Prints the history content if successful, otherwise prints error details.
+    
+    Environment Variables:
+        API_SERVICE_URL: Base URL of the API service (default: http://localhost:8002)
+    """
     base_url = os.getenv("API_SERVICE_URL", "http://localhost:8002")
 
     print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Testing history endpoint...")

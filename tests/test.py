@@ -1,3 +1,9 @@
+"""Test module for PDF-to-Podcast API functionality.
+
+This module provides comprehensive testing capabilities for the PDF-to-Podcast API service,
+including WebSocket status monitoring, file processing, and endpoint verification.
+"""
+
 import requests
 import os
 import json as json
@@ -15,7 +21,25 @@ TEST_USER_ID = "test-userid"
 
 
 class StatusMonitor:
+    """Monitor WebSocket status updates for PDF-to-Podcast jobs.
+    
+    This class handles WebSocket connections to track the status of PDF processing,
+    agent processing, and text-to-speech conversion for a specific job.
+    
+    Attributes:
+        base_url (str): Base URL of the API service
+        job_id (str): Unique identifier for the job being monitored
+        services (set): Set of services to monitor (pdf, agent, tts)
+        tts_completed (Event): Event that is set when TTS processing completes
+    """
+
     def __init__(self, base_url, job_id):
+        """Initialize the status monitor.
+        
+        Args:
+            base_url (str): Base URL of the API service
+            job_id (str): Unique identifier for the job to monitor
+        """
         self.base_url = base_url
         self.job_id = job_id
         self.ws_url = self._get_ws_url(base_url)
@@ -37,6 +61,11 @@ class StatusMonitor:
         return urljoin(ws_base, f"/ws/status/{self.job_id}")
 
     def get_time(self):
+        """Get current time formatted as string.
+        
+        Returns:
+            str: Current time in HH:MM:SS format
+        """
         return datetime.now().strftime("%H:%M:%S")
 
     def start(self):
@@ -56,6 +85,7 @@ class StatusMonitor:
         loop.run_until_complete(self._monitor_status())
 
     async def _monitor_status(self):
+        """Monitor WebSocket status updates with automatic reconnection"""
         while not self.stop_event.is_set():
             try:
                 async with websockets.connect(self.ws_url) as websocket:
@@ -108,7 +138,11 @@ class StatusMonitor:
                 )
 
     async def _handle_message(self, message):
-        """Handle incoming WebSocket messages"""
+        """Handle incoming WebSocket messages.
+        
+        Args:
+            message (str): JSON message from WebSocket
+        """
         try:
             data = json.loads(message)
             service = data.get("service")
@@ -136,7 +170,20 @@ class StatusMonitor:
 
 
 def get_output_with_retry(base_url: str, job_id: str, max_retries=5, retry_delay=1):
-    """Retry getting output with exponential backoff"""
+    """Retry getting output with exponential backoff.
+    
+    Args:
+        base_url (str): Base URL of the API service
+        job_id (str): Job ID to get output for
+        max_retries (int): Maximum number of retry attempts
+        retry_delay (int): Initial delay between retries in seconds
+        
+    Returns:
+        bytes: Audio file content
+        
+    Raises:
+        TimeoutError: If maximum retries exceeded
+    """
     for attempt in range(max_retries):
         try:
             response = requests.get(
@@ -163,7 +210,17 @@ def get_output_with_retry(base_url: str, job_id: str, max_retries=5, retry_delay
 
 
 def test_saved_podcasts(base_url: str, job_id: str, max_retries=5, retry_delay=5):
-    """Test the saved podcasts endpoints with retry logic"""
+    """Test the saved podcasts endpoints with retry logic.
+    
+    Args:
+        base_url (str): Base URL of the API service
+        job_id (str): Job ID to test
+        max_retries (int): Maximum number of retry attempts
+        retry_delay (int): Initial delay between retries in seconds
+        
+    Raises:
+        AssertionError: If any endpoint tests fail
+    """
     print(
         f"\n[{datetime.now().strftime('%H:%M:%S')}] Testing saved podcasts endpoints..."
     )
@@ -224,6 +281,19 @@ def test_api(
     monologue: bool = False,
     vdb: bool = False,
 ):
+    """Test the PDF-to-Podcast API functionality.
+    
+    Args:
+        base_url (str): Base URL of the API service
+        target_files (List[str]): List of target PDF files to process
+        context_files (List[str]): List of context PDF files
+        monologue (bool): Whether to generate monologue instead of dialogue
+        vdb (bool): Whether to enable vector database processing
+        
+    Raises:
+        AssertionError: If any API tests fail
+        Exception: For other errors during testing
+    """
     voice_mapping = {
         "speaker-1": "iP95p4xoKVk53GoZ742B",
     }

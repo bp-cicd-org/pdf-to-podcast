@@ -1,15 +1,42 @@
+"""Test module for listing saved podcasts.
+
+This module provides functionality to retrieve and display a list of all saved podcasts
+from the PDF-to-Podcast API service, including their metadata and transcription parameters.
+"""
+
 import requests
 import ujson as json
 from datetime import datetime
 
 
-def format_timestamp(timestamp_str):
-    """Format the ISO timestamp into a more readable format"""
+def format_timestamp(timestamp_str: str) -> str:
+    """Format an ISO timestamp string into a more readable format.
+    
+    Args:
+        timestamp_str (str): ISO format timestamp string with timezone info
+        
+    Returns:
+        str: Formatted timestamp string in the format "Month DD, YYYY at HH:MM AM/PM"
+    """
     dt = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
     return dt.strftime("%B %d, %Y at %I:%M %p")
 
 
 def list_saved_podcasts():
+    """Retrieve and display a list of all saved podcasts from the API.
+    
+    Makes a GET request to the /saved_podcasts endpoint and prints details of each podcast
+    including:
+    - Job ID
+    - Filename
+    - Creation timestamp
+    - Transcription parameters
+    
+    Handles various error cases like connection failures and invalid responses.
+    
+    Environment Variables:
+        API_SERVICE_URL: Base URL of the API service (default: http://localhost:8002)
+    """
     try:
         print("\nAttempting to connect to API...")
         response = requests.get("http://localhost:8002/saved_podcasts")

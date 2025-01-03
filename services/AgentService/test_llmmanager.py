@@ -36,6 +36,18 @@ async def test_basic_queries():
     Tests the basic query functionality of LLMManager by making both sync
     and async requests with simple prompts. Verifies that both methods
     return expected responses.
+
+    The test:
+    1. Creates an LLMManager instance
+    2. Tests synchronous query with robotics laws prompt
+    3. Tests asynchronous query with machine learning prompt
+    4. Prints responses for manual verification
+
+    Returns:
+        None
+    
+    Raises:
+        Exception: If either query fails or returns unexpected response
     """
     print("\n=== Testing Basic Queries ===")
 
@@ -77,6 +89,18 @@ async def test_parallel_processing():
     Demonstrates the ability to process multiple queries concurrently using
     asyncio.gather(). Sends three different programming language queries
     simultaneously and collects their responses.
+
+    The test:
+    1. Creates an LLMManager instance
+    2. Defines three programming language questions
+    3. Processes queries in parallel using asyncio.gather()
+    4. Prints responses in order with corresponding questions
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If parallel processing fails or returns unexpected responses
     """
     print("\n=== Testing Parallel Processing ===")
 
@@ -85,6 +109,16 @@ async def test_parallel_processing():
     questions = ["What is Python?", "What is JavaScript?", "What is Rust?"]
 
     async def process_query(question: str, idx: int):
+        """
+        Helper function to process individual queries.
+
+        Args:
+            question (str): The question to ask the LLM
+            idx (int): Index for tracking parallel queries
+
+        Returns:
+            AIMessage: The LLM's response
+        """
         return await manager.query_async(
             model_key="reasoning",
             messages=[
@@ -109,6 +143,18 @@ async def test_json_schema():
     Verifies that the LLMManager can generate responses conforming to a
     specified JSON schema. Uses a sample schema for person details including
     name, age, occupation, and hobbies.
+
+    The test:
+    1. Creates an LLMManager instance
+    2. Defines a JSON schema for person details
+    3. Requests a character generation conforming to schema
+    4. Verifies response matches schema structure
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If response doesn't conform to schema or query fails
     """
     print("\n=== Testing JSON Schema ===")
 
@@ -145,6 +191,18 @@ async def test_streaming():
     Tests the streaming capabilities of LLMManager using both sync and async
     methods. Verifies that streaming responses are received correctly for
     simple counting and listing tasks.
+
+    The test:
+    1. Creates an LLMManager instance
+    2. Tests sync streaming with counting prompt
+    3. Tests async streaming with days of week prompt
+    4. Verifies streaming responses are complete and coherent
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If streaming fails or returns incomplete responses
     """
     print("\n=== Testing Streaming ===")
 
@@ -186,6 +244,19 @@ async def test_json_streaming():
     Tests the combination of JSON schema validation and streaming responses.
     Uses a simple story summary schema to verify that streamed responses
     conform to the specified structure.
+
+    The test:
+    1. Creates an LLMManager instance
+    2. Defines a story summary JSON schema
+    3. Tests sync JSON streaming
+    4. Tests async JSON streaming
+    5. Verifies both responses conform to schema
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If streaming fails or responses don't match schema
     """
     print("\n=== Testing JSON Streaming ===")
 
@@ -240,6 +311,18 @@ async def main_test():
     Main test runner that executes all test functions in sequence.
     Currently configured to run only streaming tests, with other tests
     commented out for focused testing.
+
+    The function:
+    1. Attempts to run each test in sequence
+    2. Catches and reports any exceptions
+    3. Currently focuses on streaming tests
+    4. Other tests are commented out for selective testing
+
+    Returns:
+        None
+
+    Raises:
+        Exception: Prints error message if any test fails
     """
     try:
         # # Test basic queries

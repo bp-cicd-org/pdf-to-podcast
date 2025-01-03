@@ -27,11 +27,29 @@ MINIO_BUCKET_NAME = os.getenv("MINIO_BUCKET_NAME", "audio-results")
 # TODO: wrap errors in StorageError
 # TODO: implement cleanup and delete as well
 class StorageManager:
+    """Manages storage operations using MinIO as the backend.
+
+    This class provides an interface for storing and retrieving files using MinIO,
+    with support for user isolation, job tracking, and metadata management.
+
+    Attributes:
+        telemetry (OpenTelemetryInstrumentation): Instance for tracing operations
+        client (Minio): MinIO client instance
+        bucket_name (str): Name of the MinIO bucket to use
+    """
+
     def __init__(self, telemetry: OpenTelemetryInstrumentation):
-        """
-        Initialize MinIO client and ensure bucket exists
+        """Initialize MinIO client and ensure bucket exists. 
         requires: OpenTelemetryInstrumentation instance for tracing since Minio
         does not have an auto otel instrumentor
+
+        Requires:
+        Args:
+            telemetry (OpenTelemetryInstrumentation): Instance for tracing since MinIO
+                does not have an auto OpenTelemetry instrumentor
+
+        Raises:
+            Exception: If MinIO client initialization fails
         """
         try:
             self.telemetry: OpenTelemetryInstrumentation = telemetry
@@ -60,6 +78,11 @@ class StorageManager:
             raise
 
     def _ensure_bucket_exists(self):
+        """Ensure the configured bucket exists, creating it if necessary.
+
+        Raises:
+            Exception: If bucket creation fails
+        """
         try:
             if not self.client.bucket_exists(self.bucket_name):
                 self.client.make_bucket(self.bucket_name)
@@ -68,7 +91,16 @@ class StorageManager:
             raise
 
     def _get_object_path(self, user_id: str, job_id: str, filename: str) -> str:
-        """Generate the full object path including user isolation"""
+        """Generate the full object path including user isolation.
+
+        Args:
+            user_id (str): ID of the user
+            job_id (str): ID of the job
+            filename (str): Name of the file
+
+        Returns:
+            str: Full object path in format "user_id/job_id/filename"
+        """
         return f"{user_id}/{job_id}/{filename}"
 
     def store_file(
@@ -80,7 +112,19 @@ class StorageManager:
         content_type: str,
         metadata: dict = None,
     ) -> None:
-        """Store any file type in MinIO with metadata"""
+        """Store any file type in MinIO with metadata.
+
+        Args:
+            user_id (str): ID of the user
+            job_id (str): ID of the job
+            content (bytes): File content to store
+            filename (str): Name of the file
+            content_type (str): MIME type of the file
+            metadata (dict, optional): Additional metadata to store. Defaults to None.
+
+        Raises:
+            Exception: If file storage fails
+        """
         with self.telemetry.tracer.start_as_current_span("store_file") as span:
             span.set_attribute("user_id", user_id)
             span.set_attribute("job_id", job_id)
@@ -113,7 +157,18 @@ class StorageManager:
         filename: str,
         transcription_params: TranscriptionParams,
     ):
-        """Store audio file with metadata in MinIO"""
+        """Store audio file with metadata in MinIO.
+
+        Args:
+            user_id (str): ID of the user
+            job_id (str): ID of the job
+            audio_content (bytes): Audio file content
+            filename (str): Name of the audio file
+            transcription_params (TranscriptionParams): Parameters used for transcription
+
+        Raises:
+            S3Error: If MinIO storage operation fails
+        """
         with self.telemetry.tracer.start_as_current_span("store_audio") as span:
             span.set_attribute("job_id", job_id)
             span.set_attribute("user_id", user_id)
@@ -146,7 +201,18 @@ class StorageManager:
                 raise
 
     def get_podcast_audio(self, user_id: str, job_id: str) -> Optional[str]:
-        """Get the audio data for a specific podcast by job_id"""
+        """Get the audio data for a specific podcast by job_id.
+
+        Args:
+            user_id (str): ID of the user
+            job_id (str): ID of the job
+
+        Returns:
+            Optional[str]: Base64 encoded audio data if found, None otherwise
+
+        Raises:
+            Exception: If retrieval fails
+        """
         with self.telemetry.tracer.start_as_current_span("get_podcast_audio") as span:
             span.set_attribute("job_id", job_id)
             span.set_attribute("user_id", user_id)
@@ -176,7 +242,19 @@ class StorageManager:
                 raise
 
     def get_file(self, user_id: str, job_id: str, filename: str) -> Optional[bytes]:
-        """Get any file from storage by user_id, job_id and filename"""
+        """Get any file from storage by user_id, job_id and filename.
+
+        Args:
+            user_id (str): ID of the user
+            job_id (str): ID of the job
+            filename (str): Name of the file to retrieve
+
+        Returns:
+            Optional[bytes]: File content if found, None if file doesn't exist
+
+        Raises:
+            Exception: If retrieval fails for reasons other than missing file
+        """
         with self.telemetry.tracer.start_as_current_span("get_file") as span:
             span.set_attribute("job_id", job_id)
             span.set_attribute("user_id", user_id)
@@ -202,7 +280,15 @@ class StorageManager:
                 raise
 
     def delete_job_files(self, user_id: str, job_id: str) -> bool:
-        """Delete all files associated with a user_id and job_id"""
+        """Delete all files associated with a user_id and job_id.
+
+        Args:
+            user_id (str): ID of the user
+            job_id (str): ID of the job
+
+        Returns:
+            bool: True if deletion successful, False otherwise
+        """
         with self.telemetry.tracer.start_as_current_span("delete_job_files") as span:
             span.set_attribute("job_id", job_id)
             span.set_attribute("user_id", user_id)
@@ -229,7 +315,17 @@ class StorageManager:
                 return False
 
     def list_files_metadata(self, user_id: str = None):
-        """Lists metadata filtered by user_id if provided"""
+        """Lists metadata filtered by user_id if provided.
+
+        Args:
+            user_id (str, optional): ID of user to filter results. Defaults to None.
+
+        Returns:
+            list: List of dictionaries containing file metadata
+
+        Raises:
+            Exception: If listing fails
+        """
         with self.telemetry.tracer.start_as_current_span("list_files_metadata") as span:
             try:
                 # If user_id is provided, use it as prefix to filter results

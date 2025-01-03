@@ -1,3 +1,9 @@
+"""Test module for invalid file type handling.
+
+This module contains test functions to verify that the API properly handles
+invalid file types and malformed transcription parameters.
+"""
+
 import os
 import requests
 from requests import Response
@@ -6,6 +12,18 @@ from datetime import datetime
 
 
 def test(base_url: str):
+    """Test invalid file type and parameter handling.
+    
+    Tests two scenarios:
+    1. Submitting a .txt file instead of PDF
+    2. Submitting invalid transcription parameters
+    
+    Args:
+        base_url (str): Base URL of the API service
+    
+    Raises:
+        AssertionError: If response status codes don't match expected 400
+    """
     # Define default voice mapping
     voice_mapping = {
         "speaker-1": "iP95p4xoKVk53GoZ742B",  # Example voice ID for speaker 1
@@ -43,6 +61,21 @@ def test(base_url: str):
 def test_api(
     base_url: str, file_name: str, file_type: str, transcription_params: dict[str, any]
 ) -> Response:
+    """Test the PDF processing API endpoint with various inputs.
+
+    Args:
+        base_url (str): Base URL of the API service
+        file_name (str): Name of the file to upload
+        file_type (str): MIME type of the file
+        transcription_params (dict[str, any]): Parameters for transcription
+
+    Returns:
+        Response: Response object from the API request
+
+    Raises:
+        FileNotFoundError: If samples directory or test file not found
+        AssertionError: If test file does not exist
+    """
     # API endpoint
     process_url = f"{base_url}/process_pdf"
 

@@ -20,7 +20,16 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class OpenTelemetryConfig:
-    """Configuration for OpenTelemetry setup."""
+    """Configuration for OpenTelemetry setup.
+    
+    Attributes:
+        service_name (str): Name of the service to be used in traces
+        otlp_endpoint (str): OTLP endpoint URL for sending traces. Defaults to "http://jaeger:4317"
+        enable_redis (bool): Whether to enable Redis instrumentation. Defaults to True
+        enable_requests (bool): Whether to enable requests library instrumentation. Defaults to True
+        enable_httpx (bool): Whether to enable HTTPX client instrumentation. Defaults to True
+        enable_urllib3 (bool): Whether to enable urllib3 instrumentation. Defaults to True
+    """
 
     service_name: str
     otlp_endpoint: str = "http://jaeger:4317"
@@ -32,7 +41,11 @@ class OpenTelemetryConfig:
 
 class OpenTelemetryInstrumentation:
     """
-    Lightweight OTEL wrapper
+    Lightweight OpenTelemetry wrapper for easy instrumentation of FastAPI applications.
+    
+    This class provides a simple interface to set up OpenTelemetry tracing with common
+    instrumentations like Redis, requests, HTTPX, and urllib3. It handles the configuration
+    of trace providers, processors, and exporters.
 
     Example usage:
         telemetry = OpenTelemetryInstrumentation()
@@ -45,12 +58,20 @@ class OpenTelemetryInstrumentation:
     """
 
     def __init__(self):
+        """Initialize the OpenTelemetryInstrumentation instance."""
         self._tracer: Optional[trace.Tracer] = None
         self._config: Optional[OpenTelemetryConfig] = None
 
     @property
     def tracer(self) -> trace.Tracer:
-        """Get the configured tracer instance."""
+        """Get the configured tracer instance.
+        
+        Returns:
+            trace.Tracer: The configured OpenTelemetry tracer
+            
+        Raises:
+            RuntimeError: If initialize() hasn't been called yet
+        """
         if not self._tracer:
             raise RuntimeError(
                 "OpenTelemetry has not been initialized. Call initialize() first."
@@ -68,7 +89,7 @@ class OpenTelemetryInstrumentation:
             config: OpenTelemetryConfig instance containing configuration options
 
         Returns:
-            self for method chaining
+            OpenTelemetryInstrumentation: self for method chaining
         """
         self._config = config
         logger.info(f"Setting up tracing for service: {self._config.service_name}")
@@ -78,7 +99,11 @@ class OpenTelemetryInstrumentation:
         return self
 
     def _setup_tracing(self) -> None:
-        """Set up the OpenTelemetry tracer provider and processors."""
+        """Set up the OpenTelemetry tracer provider and processors.
+        
+        Configures the trace provider with the service name resource and sets up
+        batch processing of spans to the configured OTLP endpoint.
+        """
         resource = Resource.create({"service.name": self._config.service_name})
 
         provider = TracerProvider(resource=resource)
@@ -92,7 +117,14 @@ class OpenTelemetryInstrumentation:
         self._tracer = trace.get_tracer(self._config.service_name)
 
     def _instrument_app(self, app=None) -> None:
-        """Instrument the FastAPI application and optional components."""
+        """Instrument the FastAPI application and optional components.
+        
+        Args:
+            app: Optional FastAPI application instance to instrument
+            
+        Enables instrumentation for FastAPI (if app provided) and optionally for
+        Redis, requests, HTTPX, and urllib3 based on configuration.
+        """
         # Instrument FastAPI
         if app:
             FastAPIInstrumentor.instrument_app(app)

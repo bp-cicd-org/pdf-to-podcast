@@ -10,6 +10,16 @@ from typing import Dict
 # Mock the TranscriptionParams that was in main.py
 @dataclass
 class TranscriptionParams:
+    """Parameters for transcription configuration.
+
+    Attributes:
+        name (str): Name of the podcast
+        duration (int): Duration in minutes
+        speaker_1_name (str): Name of first speaker
+        speaker_2_name (str): Name of second speaker
+        model (str): Model to use for transcription
+        voice_mapping (Dict[str, str]): Mapping of speaker IDs to voice IDs
+    """
     name: str
     duration: int
     speaker_1_name: str
@@ -19,8 +29,18 @@ class TranscriptionParams:
 
 
 class StorageManager:
+    """Manages storage operations with MinIO for audio files.
+
+    This class handles initialization of MinIO client, bucket creation,
+    and operations for storing and retrieving audio files.
+    """
+
     def __init__(self):
-        """Initialize MinIO client and ensure bucket exists"""
+        """Initialize MinIO client and ensure bucket exists.
+
+        Raises:
+            Exception: If MinIO client initialization fails
+        """
         try:
             self.client = Minio(
                 os.getenv("MINIO_ENDPOINT", "localhost:9000"),
@@ -38,9 +58,19 @@ class StorageManager:
             raise
 
     def get_time(self):
+        """Get current time formatted as string.
+
+        Returns:
+            str: Current time in HH:MM:SS format
+        """
         return datetime.now().strftime("%H:%M:%S")
 
     def _ensure_bucket_exists(self):
+        """Create bucket if it doesn't exist.
+
+        Raises:
+            Exception: If bucket creation fails
+        """
         try:
             if not self.client.bucket_exists(self.bucket_name):
                 self.client.make_bucket(self.bucket_name)
@@ -56,6 +86,17 @@ class StorageManager:
         filename: str,
         transcription_params: TranscriptionParams,
     ):
+        """Store audio file in MinIO.
+
+        Args:
+            job_id (str): Unique identifier for the job
+            audio_content (bytes): Audio file content
+            filename (str): Name of the audio file
+            transcription_params (TranscriptionParams): Parameters for transcription
+
+        Returns:
+            bool: True if storage successful, False otherwise
+        """
         try:
             object_name = f"{job_id}/{filename}"
             self.client.put_object(
@@ -74,6 +115,15 @@ class StorageManager:
             return False
 
     def get_audio(self, job_id: str, filename: str):
+        """Retrieve audio file from MinIO.
+
+        Args:
+            job_id (str): Unique identifier for the job
+            filename (str): Name of the audio file
+
+        Returns:
+            bytes: Audio file content if successful, None otherwise
+        """
         try:
             object_name = f"{job_id}/{filename}"
             result = self.client.get_object(self.bucket_name, object_name).read()
@@ -87,6 +137,15 @@ class StorageManager:
 
 
 def test_storage_manager():
+    """Run tests for StorageManager functionality.
+    
+    Tests include:
+    1. Initialization of StorageManager
+    2. Storing audio file
+    3. Retrieving stored audio file
+    4. Handling non-existent file retrieval
+    5. Cleanup of test data
+    """
     print("\n=== Starting Storage Manager Tests ===")
 
     # Initialize test data

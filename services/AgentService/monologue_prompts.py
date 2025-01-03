@@ -10,8 +10,6 @@ import jinja2
 from typing import Dict
 
 # Template for summarizing individual PDF documents
-# This template guides the LLM to analyze a document focusing on key metrics,
-# trends, context and data accuracy while ensuring proper text formatting
 MONOLOGUE_SUMMARY_PROMPT_STR = """
 You are a knowledgeable analyst. Please provide a targeted analysis of the following document, focusing on: {{ focus }}
 
@@ -52,8 +50,6 @@ You are presenting to the board of directors. Speak in a way that is engaging an
 """
 
 # Template for synthesizing multiple document summaries into an outline
-# This template guides the LLM to create a structured monologue outline by combining
-# multiple document summaries while maintaining proper timing and formatting
 MONOLOGUE_MULTI_DOC_SYNTHESIS_PROMPT_STR = """
 Create a structured monologue outline synthesizing the following document summaries. The monologue should be 30-45 seconds long.
 
@@ -95,8 +91,6 @@ Requirements:
 Output a structured outline that synthesizes insights across all documents, emphasizing Target Documents while using Context Documents for support."""
 
 # Template for generating the actual monologue transcript
-# This template guides the LLM to create a focused update based on the outline and source
-# documents while following specific duration, structure and formatting requirements
 MONOLOGUE_TRANSCRIPT_PROMPT_STR = """
 Create a focused update based on this outline and source documents.
 
@@ -147,8 +141,6 @@ Requirements:
 Create a concise, engaging monologue that follows the outline while delivering essential financial information."""
 
 # Template for converting monologue to structured dialogue format
-# This template guides the LLM to convert a financial monologue into a structured JSON format
-# while maintaining proper formatting and data accuracy
 MONOLOGUE_DIALOGUE_PROMPT_STR = """You are tasked with converting a financial monologue into a structured JSON format. You have:
 
 1. Speaker information:
@@ -188,7 +180,7 @@ PROMPT_TEMPLATES = {
     "monologue_dialogue_prompt": MONOLOGUE_DIALOGUE_PROMPT_STR,
 }
 
-# Create Jinja templates once for efficiency
+# Create Jinja templates once
 TEMPLATES: Dict[str, jinja2.Template] = {
     name: jinja2.Template(template) for name, template in PROMPT_TEMPLATES.items()
 }
@@ -212,7 +204,7 @@ class FinancialSummaryPrompts:
 
     def __getattr__(self, name: str) -> str:
         """
-        Dynamically handle prompt requests by name.
+        Get the Jinja template by name
 
         Args:
             name (str): Name of the prompt template to retrieve

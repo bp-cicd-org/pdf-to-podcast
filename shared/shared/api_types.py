@@ -5,35 +5,40 @@ from enum import Enum
 
 
 class JobStatus(str, Enum):
-    PENDING = "pending"
-    PROCESSING = "processing"
-    COMPLETED = "completed"
-    FAILED = "failed"
+    """Enum representing the possible states of a job."""
+    PENDING = "pending"  # Job has been created but not started
+    PROCESSING = "processing"  # Job is currently being processed
+    COMPLETED = "completed"  # Job has finished successfully
+    FAILED = "failed"  # Job encountered an error and failed
 
 
 class ServiceType(str, Enum):
-    PDF = "pdf"
-    AGENT = "agent"
-    TTS = "tts"
+    """Enum representing the different service types in the system."""
+    PDF = "pdf"  # PDF processing service
+    AGENT = "agent"  # Agent/LLM service
+    TTS = "tts"  # Text-to-speech service
 
 
 class StatusUpdate(BaseModel):
+    """Model for job status updates sent between services."""
     job_id: str
     status: JobStatus
-    message: Optional[str] = None
-    service: Optional[ServiceType] = None
-    timestamp: Optional[float] = None
-    data: Optional[dict] = None
+    message: Optional[str] = None  # Optional status message
+    service: Optional[ServiceType] = None  # Service sending the update
+    timestamp: Optional[float] = None  # Unix timestamp of update
+    data: Optional[dict] = None  # Additional status data
 
 
 class StatusResponse(BaseModel):
-    status: str
-    result: Optional[str] = None
-    error: Optional[str] = None
-    message: Optional[str] = None
+    """Model for API status responses."""
+    status: str  # Overall status of the operation
+    result: Optional[str] = None  # Optional success result
+    error: Optional[str] = None  # Optional error message
+    message: Optional[str] = None  # Optional status message
 
 
 class TranscriptionParams(BaseModel):
+    """Base parameters for podcast transcription requests."""
     userId: str = Field(..., description="KAS User ID")
     name: str = Field(..., description="Name of the podcast")
     duration: int = Field(..., description="Duration in minutes")
@@ -64,6 +69,23 @@ class TranscriptionParams(BaseModel):
 
     @model_validator(mode="after")
     def validate_monologue_settings(self) -> "TranscriptionParams":
+        """
+        Validates the configuration based on monologue/dialogue mode.
+        
+        For monologue mode:
+        - No second speaker name should be provided
+        - Voice mapping should only contain speaker-1
+        
+        For dialogue mode:
+        - Second speaker name is required
+        - Voice mapping must contain both speakers
+        
+        Returns:
+            TranscriptionParams: The validated model instance
+            
+        Raises:
+            ValueError: If validation fails
+        """
         if self.monologue:
             # Check speaker_2_name is not provided
             if self.speaker_2_name is not None:
@@ -95,11 +117,16 @@ class TranscriptionParams(BaseModel):
 
 
 class TranscriptionRequest(TranscriptionParams):
-    pdf_metadata: List[PDFMetadata]
-    job_id: str
+    """
+    Complete transcription request model extending TranscriptionParams.
+    Includes PDF metadata and job tracking information.
+    """
+    pdf_metadata: List[PDFMetadata]  # List of PDFs to process
+    job_id: str  # Unique identifier for the transcription job
 
 
 class RAGRequest(BaseModel):
+    """Model for Retrieval-Augmented Generation (RAG) requests."""
     query: str = Field(..., description="The search query to process")
     k: int = Field(..., description="Number of results to retrieve", ge=1)
     job_id: str = Field(..., description="The unique job identifier")

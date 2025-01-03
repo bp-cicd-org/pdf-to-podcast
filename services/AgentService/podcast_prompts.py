@@ -330,11 +330,32 @@ class PodcastPrompts:
     This class manages a collection of Jinja2 templates used for generating
     various prompts in the podcast creation process, from PDF summarization
     to dialogue generation.
+
+    The templates are pre-compiled for efficiency and can be accessed either
+    through attribute access or the get_template class method.
+
+    Attributes:
+        None - Templates are stored in module-level constants
+
+    Methods:
+        __getattr__(name: str) -> str:
+            Dynamically retrieves prompt template strings by name
+        get_template(name: str) -> jinja2.Template:
+            Retrieves pre-compiled Jinja2 templates by name
     """
     
     def __getattr__(self, name: str) -> str:
         """
         Dynamically retrieve prompt templates by name.
+
+        Args:
+            name (str): Name of the prompt template to retrieve
+
+        Returns:
+            str: The prompt template string
+
+        Raises:
+            AttributeError: If the requested template name doesn't exist
         """
         if name in PROMPT_TEMPLATES:
             return PROMPT_TEMPLATES[name]
@@ -343,6 +364,15 @@ class PodcastPrompts:
     @classmethod
     def get_template(cls, name: str) -> jinja2.Template:
         """
-        Get a Jinja2 template by name.
+        Get a pre-compiled Jinja2 template by name.
+
+        Args:
+            name (str): Name of the template to retrieve
+
+        Returns:
+            jinja2.Template: The pre-compiled Jinja2 template object
+
+        Raises:
+            KeyError: If the requested template name doesn't exist
         """
         return TEMPLATES[name]

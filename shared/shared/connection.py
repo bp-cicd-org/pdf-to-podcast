@@ -14,7 +14,31 @@ logger = logging.getLogger(__name__)
 
 
 class ConnectionManager:
+    """
+    Manages WebSocket connections and Redis pub/sub for real-time status updates.
+    
+    This class handles:
+    - WebSocket connections for each job ID
+    - Redis pub/sub subscription for status updates
+    - Broadcasting messages to connected clients
+    - Connection cleanup and resource management
+    
+    Attributes:
+        active_connections (Dict[str, Set[WebSocket]]): Maps job IDs to sets of active WebSocket connections
+        pubsub: Redis pub/sub connection
+        message_queue (Queue): Thread-safe queue for message processing
+        redis_thread (Thread): Background thread for Redis subscription
+        should_stop (bool): Flag to control background thread termination
+        redis_client (redis.Redis): Redis client instance
+    """
+
     def __init__(self, redis_client: redis.Redis):
+        """
+        Initialize the connection manager.
+        
+        Args:
+            redis_client (redis.Redis): Redis client for pub/sub functionality
+        """
         self.active_connections: Dict[str, Set[WebSocket]] = defaultdict(set)
         self.pubsub = None
         self.message_queue = queue.Queue()
@@ -23,6 +47,13 @@ class ConnectionManager:
         self.redis_client = redis_client
 
     async def connect(self, websocket: WebSocket, job_id: str):
+        """
+        Accept a new WebSocket connection for a job.
+        
+        Args:
+            websocket (WebSocket): The WebSocket connection to accept
+            job_id (str): ID of the job this connection is monitoring
+        """
         await websocket.accept()
         self.active_connections[job_id].add(websocket)
         logger.info(
@@ -38,6 +69,13 @@ class ConnectionManager:
             asyncio.create_task(self._process_messages())
 
     def disconnect(self, websocket: WebSocket, job_id: str):
+        """
+        Remove a WebSocket connection for a job.
+        
+        Args:
+            websocket (WebSocket): The WebSocket connection to remove
+            job_id (str): ID of the job the connection was monitoring
+        """
         if job_id in self.active_connections:
             self.active_connections[job_id].remove(websocket)
             if not self.active_connections[job_id]:
@@ -47,7 +85,12 @@ class ConnectionManager:
             )
 
     def _redis_listener(self):
-        """Redis subscription running in a separate thread"""
+        """
+        Background thread that listens for Redis pub/sub messages.
+        
+        Subscribes to the status_updates:all channel and queues received messages
+        for processing by the async message processor.
+        """
         try:
             self.pubsub = self.redis_client.pubsub(ignore_subscribe_messages=True)
             self.pubsub.subscribe("status_updates:all")
@@ -77,7 +120,12 @@ class ConnectionManager:
                 self.pubsub.close()
 
     async def _process_messages(self):
-        """Async task to process messages from the queue and broadcast them"""
+        """
+        Async task that processes queued messages and broadcasts them to clients.
+        
+        Continuously checks the message queue and broadcasts valid messages
+        to all connected WebSocket clients for the relevant job ID.
+        """
         while True:
             try:
                 # Check queue in a non-blocking way
@@ -116,7 +164,13 @@ class ConnectionManager:
                 await asyncio.sleep(1)
 
     async def broadcast_to_job(self, job_id: str, message: dict):
-        """Send message to all WebSocket connections for a job"""
+        """
+        Send a message to all WebSocket connections for a specific job.
+        
+        Args:
+            job_id (str): ID of the job to broadcast to
+            message (dict): Message to broadcast to all connections
+        """
         if job_id in self.active_connections:
             disconnected = set()
             for connection in self.active_connections[job_id]:
@@ -133,7 +187,11 @@ class ConnectionManager:
                 self.disconnect(connection, job_id)
 
     def cleanup(self):
-        """Cleanup resources"""
+        """
+        Clean up resources used by the connection manager.
+        
+        Stops the Redis listener thread and closes the pub/sub connection.
+        """
         self.should_stop = True
         if self.redis_thread:
             self.redis_thread.join(timeout=1.0)

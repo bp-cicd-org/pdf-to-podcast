@@ -14,11 +14,25 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ModelConfig:
+    """Configuration for a specific LLM model.
+    
+    Attributes:
+        name (str): Name/identifier of the model
+        api_base (str): Base URL for the model's API endpoint
+    """
     name: str
     api_base: str
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ModelConfig":
+        """Create a ModelConfig instance from a dictionary.
+        
+        Args:
+            data (Dict[str, Any]): Dictionary containing model configuration
+            
+        Returns:
+            ModelConfig: New ModelConfig instance
+        """
         return cls(
             name=data["name"],
             api_base=data["api_base"],
@@ -34,6 +48,12 @@ class LLMManager:
 
     Configs can be overridden by providing a custom config file. Currently the defaults are
     hardcoded to build.nvidia.com endpoints.
+
+    Attributes:
+        api_key (str): API key for NVIDIA endpoints
+        telemetry (OpenTelemetryInstrumentation): Telemetry instrumentation instance
+        _llm_cache (Dict[str, ChatNVIDIA]): Cache of initialized LLM models
+        model_configs (Dict[str, ModelConfig]): Model configurations
 
     Usage:
     >>> llm_manager = LLMManager(api_key, telemetry)
@@ -62,8 +82,15 @@ class LLMManager:
         config_path: Optional[str] = None,
     ):
         """
-        Initialize LLMManager with telemetry
-        requires: OpenTelemetryInstrumentation instance for tracing
+        Initialize LLMManager with telemetry.
+
+        Args:
+            api_key (str): API key for NVIDIA endpoints
+            telemetry (OpenTelemetryInstrumentation): Telemetry instrumentation instance
+            config_path (Optional[str]): Path to custom model configurations file
+
+        Raises:
+            Exception: If initialization fails
         """
         try:
             self.api_key = api_key
@@ -78,7 +105,14 @@ class LLMManager:
     def _load_configurations(
         self, config_path: Optional[str]
     ) -> Dict[str, ModelConfig]:
-        """Load model configurations from JSON file if provided, otherwise use defaults"""
+        """Load model configurations from JSON file if provided, otherwise use defaults.
+        
+        Args:
+            config_path (Optional[str]): Path to configuration JSON file
+            
+        Returns:
+            Dict[str, ModelConfig]: Dictionary mapping model keys to configurations
+        """
         configs = self.DEFAULT_CONFIGS.copy()
         if config_path:
             try:
@@ -97,7 +131,17 @@ class LLMManager:
         return {key: ModelConfig.from_dict(config) for key, config in configs.items()}
 
     def get_llm(self, model_key: str) -> ChatNVIDIA:
-        """Get or create a ChatNVIDIA model for the specified model key"""
+        """Get or create a ChatNVIDIA model for the specified model key.
+        
+        Args:
+            model_key (str): Key identifying which model configuration to use
+            
+        Returns:
+            ChatNVIDIA: Initialized ChatNVIDIA instance
+            
+        Raises:
+            ValueError: If model_key is not found in configurations
+        """
         if model_key not in self.model_configs:
             raise ValueError(f"Unknown model key: {model_key}")
         if model_key not in self._llm_cache:
@@ -118,7 +162,21 @@ class LLMManager:
         json_schema: Optional[Dict] = None,
         retries: int = 5,
     ) -> Union[AIMessage, Dict[str, Any]]:
-        """Send a synchronous query to the specified model"""
+        """Send a synchronous query to the specified model.
+        
+        Args:
+            model_key (str): Key identifying which model to use
+            messages (List[Dict[str, str]]): List of message dictionaries
+            query_name (str): Name of query for telemetry
+            json_schema (Optional[Dict]): Schema for structured output
+            retries (int): Number of retry attempts
+            
+        Returns:
+            Union[AIMessage, Dict[str, Any]]: Model response
+            
+        Raises:
+            Exception: If query fails after retries
+        """
         with self.telemetry.tracer.start_as_current_span(
             f"agent.query.{query_name}"
         ) as span:
@@ -151,7 +209,21 @@ class LLMManager:
         json_schema: Optional[Dict] = None,
         retries: int = 5,
     ) -> Union[AIMessage, Dict[str, Any]]:
-        """Send an asynchronous query to the specified model"""
+        """Send an asynchronous query to the specified model.
+        
+        Args:
+            model_key (str): Key identifying which model to use
+            messages (List[Dict[str, str]]): List of message dictionaries
+            query_name (str): Name of query for telemetry
+            json_schema (Optional[Dict]): Schema for structured output
+            retries (int): Number of retry attempts
+            
+        Returns:
+            Union[AIMessage, Dict[str, Any]]: Model response
+            
+        Raises:
+            Exception: If query fails after retries
+        """
         with self.telemetry.tracer.start_as_current_span(
             f"agent.query.{query_name}"
         ) as span:
@@ -184,7 +256,21 @@ class LLMManager:
         json_schema: Optional[Dict] = None,
         retries: int = 5,
     ) -> Union[str, Dict[str, Any]]:
-        """Send a synchronous streaming query to the specified model"""
+        """Send a synchronous streaming query to the specified model.
+        
+        Args:
+            model_key (str): Key identifying which model to use
+            messages (List[Dict[str, str]]): List of message dictionaries
+            query_name (str): Name of query for telemetry
+            json_schema (Optional[Dict]): Schema for structured output
+            retries (int): Number of retry attempts
+            
+        Returns:
+            Union[str, Dict[str, Any]]: Final chunk from model stream
+            
+        Raises:
+            Exception: If streaming query fails after retries
+        """
         with self.telemetry.tracer.start_as_current_span(
             f"agent.stream.{query_name}"
         ) as span:
@@ -226,7 +312,21 @@ class LLMManager:
         json_schema: Optional[Dict] = None,
         retries: int = 5,
     ) -> Union[str, Dict[str, Any]]:
-        """Send an asynchronous streaming query to the specified model"""
+        """Send an asynchronous streaming query to the specified model.
+        
+        Args:
+            model_key (str): Key identifying which model to use
+            messages (List[Dict[str, str]]): List of message dictionaries
+            query_name (str): Name of query for telemetry
+            json_schema (Optional[Dict]): Schema for structured output
+            retries (int): Number of retry attempts
+            
+        Returns:
+            Union[str, Dict[str, Any]]: Final chunk from model stream
+            
+        Raises:
+            Exception: If streaming query fails after retries
+        """
         with self.telemetry.tracer.start_as_current_span(
             f"agent.stream.{query_name}"
         ) as span:
