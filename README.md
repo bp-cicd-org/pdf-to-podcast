@@ -4,7 +4,7 @@
 
 This NVIDIA AI blueprint shows developers how to build an application that transforms PDFs into engaging audio content. Built on NVIDIA NIM, this blueprint is flexible, and can run securely on a private network, delivering actionable insight without sharing sensitive data.
 
-<img width="1021" alt="Screenshot 2024-12-30 at 8 43 43 PM" src="https://github.com/user-attachments/assets/604d0b4d-664f-4089-a30d-0431ff35aece" />
+<img width="1021" alt="Architecture Diagram" src="docs/architecture-diagram.png"/>
 
 The blueprint accepts a Target PDF and optionally multiple Context PDFs. The Target PDF will be the main source of information for the generated transcript while Context PDFs will be used as additional reference for the agent to use. The user can also optionally specify a guide prompt that will give a focus for the agent generated transcript (i.e. “Focus on the key drivers for NVIDIA’s Q3 earnings report”).
 
