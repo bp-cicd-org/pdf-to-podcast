@@ -150,7 +150,7 @@ The make `model-dev` target will let you spin up only the docling service.
 
 2. **Use Self-hosted NIM**
 
-By default this blueprint uses an ensemble of 3 LLMs to generate podcasts. The example uses the LLama 3.1-8B, LLama 3.1-70B, & LLama 3.1-405B NIMs for balanced performance and accuracy. To use a different model, update the models.json file with the desired model. The default models.json calls an NVIDIA-hosted API Catalog endpoints. Feel free to use it as you develop locally. When you deploy, please download and host the NIM endpoints.
+By default this blueprint uses an ensemble of 3 LLMs to generate podcasts. The example uses the LLama 3.1-8B, LLama 3.1-70B, & LLama 3.1-405B NIMs for balanced performance and accuracy. To use a different model, update the models.json file with the desired model. The default models.json calls an NVIDIA-hosted API Catalog endpoints. This is the default configuration and is recommended for most users getting started with the blueprint but once you want to adapt the blueprint, locally hosted NIM endpoints are required.
 
 3. **Change the Default Models and GPU Assignments**
 
