@@ -83,7 +83,7 @@ It is easy to swap out different pieces of the stack to optimize GPU usage for a
 
 4. **Enable Tracing**
    
-We expose a Jaeger instance at `http://localhost:16686/` for tracing. This is useful for debugging and monitoring the system.
+We expose a Jaeger instance at `http://localhost:16686/` for tracing. This is useful for debugging and monitoring the system
 
 ## Contributing
 
