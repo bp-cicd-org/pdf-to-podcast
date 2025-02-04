@@ -13,3 +13,14 @@ ruff
 ujson
 jupyterlab>3.0
 gradio==4.43.0
+
+########
+langchain-nvidia-ai-endpoints==0.3.8
+langchain==0.3.17
+langchain-community==0.3.16
+tiktoken==0.8.0
+langchain-chroma==0.2.1
+unstructured[pdf]==0.16.17
+nltk==3.8.1
+fastapi==0.111.0
+jq==1.8.0

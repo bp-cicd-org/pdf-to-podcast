@@ -18,6 +18,7 @@ services:
     environment:
       - NIM_MODEL_PROFILE=193649a2eb95e821309d6023a2cabb31489d3b690a9973c7ab5d1ff58b0aa7eb
       - NGC_API_KEY=${NVIDIA_API_KEY:?Error NVIDIA_API_KEY not set}
+      - NVIDIA_DISABLE_REQUIRE=1
     networks:
       - app-network
     profiles:

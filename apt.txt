@@ -1,0 +1,6 @@
+poppler-utils
+python3-pil
+tesseract-ocr
+libtesseract-dev
+tesseract-ocr-eng
+tesseract-ocr-script-latn
