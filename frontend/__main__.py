@@ -135,209 +135,214 @@ with gr.Blocks(css=css, js=js_func) as demo:
     with gr.Row():
         with gr.Column(scale=1): 
 
-            with gr.Tab("Full End to End Flow"):
-                gr.Markdown("### Upload at least one PDF file for a file to target or as context. ")
-                with gr.Row():
-                    target_files = gr.File(label="Upload target PDF", file_types=[".pdf"])
-                    context_files = gr.File(label="Upload context PDF", file_types=[".pdf"], file_count="multiple")
-                with gr.Row():
-                    settings = gr.CheckboxGroup(
-                        ["Monologue Only"], label="Additional Settings", info="Customize your podcast here"
-                    )   
-                with gr.Accordion("Optional: Email Details", open=False):
-                    gr.Markdown("Enter a recipient email here to receive your generated podcast in your inbox! \n\n**Note**: Ensure `SENDER_EMAIL` and `SENDER_EMAIL_PASSWORD` are configured in AI Workbench")
-                    recipient_email = gr.Textbox(label="Recipient email", placeholder="Enter email here")
-                                 
-                generate_button = gr.Button("Generate Podcast")
+            with gr.Tabs(selected=1) as tabs:
 
-            with gr.Tab("Agent Configurations"):
-                gr.Markdown(CONFIG_INSTRUCTIONS_MARKDOWN)
-                with gr.Row(elem_id="config-row"):
-                    with gr.Column():
-                        with gr.Group(elem_id="config-wrapper"):
-                            with gr.Row(elem_id="config-toolbar", elem_classes=["toolbar"]):
-                                file_title = gr.Markdown(_PSEUDO_FILE_NAME, elem_id="editor-title")
-                                save_btn = gr.Button("", icon=_SAVE_IMG, elem_classes=["toolbar"])
-                                undo_btn = gr.Button("", icon=_UNDO_IMG, elem_classes=["toolbar"])
-                                reset_btn = gr.Button("", icon=_HISTORY_IMG, elem_classes=["toolbar"])
-                            with gr.Row(elem_id="config-row-box"):
-                                editor = gr.Code(
-                                    elem_id="config-editor",
-                                    interactive=True,
-                                    language="json",
-                                    show_label=False,
-                                    container=False,
-                                )
+                with gr.Tab("Architecture Diagram", id=0):
+                    gr.Markdown(BP_INFO_MARKDOWN)
+                    gr.Image(value="frontend/static/diagram.png")
 
-            with gr.Tab("Architecture Diagram"):
-                gr.Markdown(BP_INFO_MARKDOWN)
-                gr.Image(value="frontend/static/diagram.png")
-
-            with gr.Tab("PDF RAG"):
-
-                with gr.Accordion("RAG data", open=False):
-                    gr.Markdown("### Upload PDF Text and Dialogue JSON to Create a RAG Chatbot")
-                
+                with gr.Tab("Full End to End Flow", id=1):
+                    gr.Markdown("### Upload at least one PDF file for a file to target or as context. ")
                     with gr.Row():
-                        pdf_text_file = gr.File(label="Upload PDF Text File")
-                        dialogue_json_file = gr.File(label="Upload Dialogue JSON File")
-                    index_status = gr.Textbox(label="Database Status", interactive=False)
-                    clear_index_button = gr.Button("Clear Database", size="small")
-                
-                chatbot = gr.Chatbot(label="Podcast Chat")
-                message_input = gr.Textbox(label="Your message", placeholder="Type your message here and press Enter")
+                        target_files = gr.File(label="Upload target PDF", file_types=[".pdf"])
+                        context_files = gr.File(label="Upload context PDF", file_types=[".pdf"], file_count="multiple")
+                    with gr.Row():
+                        settings = gr.CheckboxGroup(
+                            ["Monologue Only"], label="Additional Settings", info="Customize your podcast here"
+                        )   
+                    with gr.Accordion("Optional: Email Details", open=False):
+                        gr.Markdown("Enter a recipient email here to receive your generated podcast in your inbox! \n\n**Note**: Ensure `SENDER_EMAIL` and `SENDER_EMAIL_PASSWORD` are configured in AI Workbench")
+                        recipient_email = gr.Textbox(label="Recipient email", placeholder="Enter email here")
+                                     
+                    generate_button = gr.Button("Generate Podcast")
 
-                def upload_pdf(documents):
-                    """ This is a helper function for parsing the user inputted URLs and uploading them into the vector store. """
-                    global pdf_retriever
-                    if not isinstance(documents, list):
-                        documents = [documents]
-                    docs = [UnstructuredPDFLoader(document).load() for document in documents]
-                    docs_list = [item for sublist in docs for item in sublist]
+                with gr.Tab("Agent Configurations", id=2):
+                    gr.Markdown(CONFIG_INSTRUCTIONS_MARKDOWN)
+                    with gr.Row(elem_id="config-row"):
+                        with gr.Column():
+                            with gr.Group(elem_id="config-wrapper"):
+                                with gr.Row(elem_id="config-toolbar", elem_classes=["toolbar"]):
+                                    file_title = gr.Markdown(_PSEUDO_FILE_NAME, elem_id="editor-title")
+                                    save_btn = gr.Button("", icon=_SAVE_IMG, elem_classes=["toolbar"])
+                                    undo_btn = gr.Button("", icon=_UNDO_IMG, elem_classes=["toolbar"])
+                                    reset_btn = gr.Button("", icon=_HISTORY_IMG, elem_classes=["toolbar"])
+                                with gr.Row(elem_id="config-row-box"):
+                                    editor = gr.Code(
+                                        elem_id="config-editor",
+                                        interactive=True,
+                                        language="json",
+                                        show_label=False,
+                                        container=False,
+                                    )
+
+                with gr.Tab("Podcast RAG", id=3):
+    
+                    with gr.Accordion("RAG data", open=False):
+                        gr.Markdown("### Upload PDF Text and Dialogue JSON to Create a RAG Chatbot")
                     
-                    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-                        chunk_size=250, chunk_overlap=0
+                        with gr.Row():
+                            pdf_text_file = gr.File(label="Upload PDF Text File", file_types=[".pdf"], file_count="multiple")
+                            dialogue_json_file = gr.File(label="Upload Dialogue JSON File", file_types=[".json"], file_count="multiple")
+                        index_status = gr.Textbox(label="Database Status", interactive=False)
+                        clear_index_button = gr.Button("Clear Database", size="small")
+                    
+                    chatbot = gr.Chatbot(label="Podcast Chat")
+                    message_input = gr.Textbox(label="Your message", placeholder="Type your message here and press Enter")
+    
+                    def upload_pdf(documents):
+                        """ This is a helper function for parsing the user inputted URLs and uploading them into the vector store. """
+                        global pdf_retriever
+                        if not isinstance(documents, list):
+                            documents = [documents]
+                        docs = [UnstructuredPDFLoader(document).load() for document in documents]
+                        docs_list = [item for sublist in docs for item in sublist]
+                        
+                        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+                            chunk_size=250, chunk_overlap=0
+                        )
+                        doc_splits = text_splitter.split_documents(docs_list)
+                        
+                        # Add to vectorDB
+                        vectorstore = Chroma.from_documents(
+                            documents=doc_splits,
+                            collection_name="rag-chroma-pdf",
+                            embedding=NVIDIAEmbeddings(model='nvdev/nvidia/nv-embedqa-e5-v5'),
+                            client=client,
+                        )
+                        pdf_retriever = vectorstore.as_retriever()
+    
+                    def upload_json(documents):
+                        """ This is a helper function for parsing the user inputted URLs and uploading them into the vector store. """
+                        global json_retriever
+                        if not isinstance(documents, list):
+                            documents = [documents]
+                        docs = [JSONLoader(document, jq_schema=".dialogue", text_content=False).load() for document in documents]
+                        docs_list = [item for sublist in docs for item in sublist]
+                        
+                        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+                            chunk_size=250, chunk_overlap=0
+                        )
+                        doc_splits = text_splitter.split_documents(docs_list)
+                        
+                        # Add to vectorDB
+                        vectorstore = Chroma.from_documents(
+                            documents=doc_splits,
+                            collection_name="rag-chroma-json",
+                            embedding=NVIDIAEmbeddings(model='nvdev/nvidia/nv-embedqa-e5-v5'),
+                            client=client,
+                        )
+                        json_retriever = vectorstore.as_retriever()
+    
+                    def _upload_documents_pdf(files, progress=gr.Progress()):
+                        progress(0.25, desc="Initializing Task")
+                        time.sleep(0.75)
+                        progress(0.5, desc="Uploading Docs")
+                        upload_pdf(files)
+                        progress(0.75, desc="Cleaning Up")
+                        time.sleep(0.75)
+                        return {
+                            index_status: gr.update(value="PDF Files Uploaded")
+                        }
+    
+                    pdf_text_file.upload(_upload_documents_pdf, [pdf_text_file], [index_status])
+    
+                    def _upload_documents_json(files, progress=gr.Progress()):
+                        progress(0.25, desc="Initializing Task")
+                        time.sleep(0.75)
+                        progress(0.5, desc="Uploading Docs")
+                        upload_json(files)
+                        progress(0.75, desc="Cleaning Up")
+                        time.sleep(0.75)
+                        return {
+                            index_status: gr.update(value="JSON Files Uploaded")
+                        }
+    
+                    dialogue_json_file.upload(_upload_documents_json, [dialogue_json_file], [index_status])
+    
+                    def _clear_database(progress=gr.Progress()):
+                        global pdf_retriever, json_retriever
+                        progress(0.25, desc="Initializing Task")
+                        folder = "/project/data/scratch"
+                        time.sleep(0.75)
+                        progress(0.5, desc="Clearing Database")
+                        
+                        pdf_vectorstore = Chroma(
+                            collection_name="rag-chroma-pdf",
+                            embedding_function=NVIDIAEmbeddings(model='nvdev/nvidia/nv-embedqa-e5-v5'),
+                            client=client,
+                        )
+                        pdf_vectorstore._client.delete_collection(name="rag-chroma-pdf")
+                        pdf_vectorstore._client.create_collection(name="rag-chroma-pdf")
+                        json_vectorstore = Chroma(
+                            collection_name="rag-chroma-json",
+                            embedding_function=NVIDIAEmbeddings(model='nvdev/nvidia/nv-embedqa-e5-v5'),
+                            client=client,
+                        )
+                        json_vectorstore._client.delete_collection(name="rag-chroma-json")
+                        json_vectorstore._client.create_collection(name="rag-chroma-json")
+                        
+                        for filename in os.listdir(folder):
+                            if filename == "chroma.sqlite3":
+                                continue
+                            file_path = os.path.join(folder, filename)
+                            try:
+                                if os.path.isfile(file_path) or os.path.islink(file_path):
+                                    os.unlink(file_path)
+                                elif os.path.isdir(file_path):
+                                    shutil.rmtree(file_path)
+                            except Exception as e:
+                                print('Failed to delete %s. Reason: %s' % (file_path, e))
+                        
+                        progress(0.75, desc="Cleaning Up")
+                        pdf_retriever = None
+                        json_retriever = None
+                        time.sleep(0.75)
+                        return {
+                            index_status: gr.update(value="Database Cleared"),
+                            pdf_text_file: gr.update(value=None),
+                            dialogue_json_file: gr.update(value=None),
+                        }
+    
+                    clear_index_button.click(_clear_database, [], [index_status, pdf_text_file, dialogue_json_file])
+    
+                    def create_chat_model(llm):
+                        return ChatNVIDIA(model=llm)
+                    
+                    def create_chat_chain(llm):
+                        prompt = ChatPromptTemplate.from_messages([
+                            ("system", system_prompt),
+                            ("human", "{input}")
+                        ])
+                        return prompt | llm | StrOutputParser()
+    
+                    def answer_question(user_message, chat_history):
+                        global pdf_retriever, json_retriever
+                        if pdf_retriever is None and json_retriever is None:
+                            bot_response = "Please upload files to create the database first."
+                        else:
+                            llm = create_chat_model("nvdev/meta/llama-3.1-70b-instruct")
+                            chain = create_chat_chain(llm)
+                            doc_txt = ""
+                            if pdf_retriever is not None:
+                                pdf_docs = pdf_retriever.invoke(user_message)
+                                for doc in pdf_docs: 
+                                    doc_txt += doc.page_content
+                            if json_retriever is not None:
+                                json_docs = json_retriever.invoke(user_message)
+                                for doc in json_docs: 
+                                    doc_txt += doc.page_content
+                            bot_response = chain.invoke({"input": user_message, "context": doc_txt})
+                    
+                        # Append the user's message and the bot's response to the chat history
+                        chat_history = chat_history + [[user_message, bot_response]]
+                        
+                        return "", chat_history
+                    
+                    message_input.submit(
+                        fn=answer_question,
+                        inputs=[message_input, chatbot],
+                        outputs=[message_input, chatbot]
                     )
-                    doc_splits = text_splitter.split_documents(docs_list)
-                    
-                    # Add to vectorDB
-                    vectorstore = Chroma.from_documents(
-                        documents=doc_splits,
-                        collection_name="rag-chroma-pdf",
-                        embedding=NVIDIAEmbeddings(model='nvdev/nvidia/nv-embedqa-e5-v5'),
-                        client=client,
-                    )
-                    pdf_retriever = vectorstore.as_retriever()
-
-                def upload_json(documents):
-                    """ This is a helper function for parsing the user inputted URLs and uploading them into the vector store. """
-                    global json_retriever
-                    if not isinstance(documents, list):
-                        documents = [documents]
-                    docs = [JSONLoader(document, jq_schema=".dialogue", text_content=False).load() for document in documents]
-                    docs_list = [item for sublist in docs for item in sublist]
-                    
-                    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-                        chunk_size=250, chunk_overlap=0
-                    )
-                    doc_splits = text_splitter.split_documents(docs_list)
-                    
-                    # Add to vectorDB
-                    vectorstore = Chroma.from_documents(
-                        documents=doc_splits,
-                        collection_name="rag-chroma-json",
-                        embedding=NVIDIAEmbeddings(model='nvdev/nvidia/nv-embedqa-e5-v5'),
-                        client=client,
-                    )
-                    json_retriever = vectorstore.as_retriever()
-
-                def _upload_documents_pdf(files, progress=gr.Progress()):
-                    progress(0.25, desc="Initializing Task")
-                    time.sleep(0.75)
-                    progress(0.5, desc="Uploading Docs")
-                    upload_pdf(files)
-                    progress(0.75, desc="Cleaning Up")
-                    time.sleep(0.75)
-                    return {
-                        index_status: gr.update(value="PDF Files Uploaded")
-                    }
-
-                pdf_text_file.upload(_upload_documents_pdf, [pdf_text_file], [index_status])
-
-                def _upload_documents_json(files, progress=gr.Progress()):
-                    progress(0.25, desc="Initializing Task")
-                    time.sleep(0.75)
-                    progress(0.5, desc="Uploading Docs")
-                    upload_json(files)
-                    progress(0.75, desc="Cleaning Up")
-                    time.sleep(0.75)
-                    return {
-                        index_status: gr.update(value="JSON Files Uploaded")
-                    }
-
-                dialogue_json_file.upload(_upload_documents_json, [dialogue_json_file], [index_status])
-
-                def _clear_database(progress=gr.Progress()):
-                    global pdf_retriever, json_retriever
-                    progress(0.25, desc="Initializing Task")
-                    folder = "/project/data/scratch"
-                    time.sleep(0.75)
-                    progress(0.5, desc="Clearing Database")
-                    for filename in os.listdir(folder):
-                        if filename == "chroma.sqlite3":
-                            continue
-                        file_path = os.path.join(folder, filename)
-                        try:
-                            if os.path.isfile(file_path) or os.path.islink(file_path):
-                                os.unlink(file_path)
-                            elif os.path.isdir(file_path):
-                                shutil.rmtree(file_path)
-                        except Exception as e:
-                            print('Failed to delete %s. Reason: %s' % (file_path, e))
-                    # pdf_vectorstore = Chroma(
-                    #     collection_name="rag-chroma-pdf",
-                    #     embedding_function=NVIDIAEmbeddings(model='nvdev/nvidia/nv-embedqa-e5-v5'),
-                    #     client=client,
-                    # )
-                    # pdf_vectorstore._client.delete_collection(name="rag-chroma-pdf")
-                    # pdf_vectorstore._client.create_collection(name="rag-chroma-pdf")
-                    # json_vectorstore = Chroma(
-                    #     collection_name="rag-chroma-json",
-                    #     embedding_function=NVIDIAEmbeddings(model='nvdev/nvidia/nv-embedqa-e5-v5'),
-                    #     client=client,
-                    # )
-                    # json_vectorstore._client.delete_collection(name="rag-chroma-json")
-                    # json_vectorstore._client.create_collection(name="rag-chroma-json")
-                    progress(0.75, desc="Cleaning Up")
-                    pdf_retriever = None
-                    json_retriever = None
-                    time.sleep(0.75)
-                    return {
-                        index_status: gr.update(value="Database Cleared"),
-                        pdf_text_file: gr.update(value=None),
-                        dialogue_json_file: gr.update(value=None),
-                    }
-
-                clear_index_button.click(_clear_database, [], [index_status, pdf_text_file, dialogue_json_file])
-
-                def create_chat_model(llm):
-                    return ChatNVIDIA(model=llm)
-                
-                def create_chat_chain(llm):
-                    prompt = ChatPromptTemplate.from_messages([
-                        ("system", system_prompt),
-                        ("human", "{input}")
-                    ])
-                    return prompt | llm | StrOutputParser()
-
-                def answer_question(user_message, chat_history):
-                    global pdf_retriever, json_retriever
-                    if pdf_retriever is None and json_retriever is None:
-                        bot_response = "Please upload files to create the database first."
-                    else:
-                        llm = create_chat_model("nvdev/meta/llama-3.1-70b-instruct")
-                        chain = create_chat_chain(llm)
-                        doc_txt = ""
-                        if pdf_retriever is not None:
-                            pdf_docs = pdf_retriever.invoke(user_message)
-                            for doc in pdf_docs: 
-                                doc_txt += doc.page_content
-                        if json_retriever is not None:
-                            json_docs = json_retriever.invoke(user_message)
-                            for doc in json_docs: 
-                                doc_txt += doc.page_content
-                        bot_response = chain.invoke({"input": user_message, "context": doc_txt})
-                
-                    # Append the user's message and the bot's response to the chat history
-                    chat_history = chat_history + [[user_message, bot_response]]
-                    
-                    return "", chat_history
-                
-                message_input.submit(
-                    fn=answer_question,
-                    inputs=[message_input, chatbot],
-                    outputs=[message_input, chatbot]
-                )
 
         with gr.Column(scale=1):
             gr.Markdown("<br />")
