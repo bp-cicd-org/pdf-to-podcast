@@ -1,0 +1,28 @@
+
+name: Check GPU
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  hello-world:
+    runs-on: arc-runner-set-oke-org-poc-1.34-4-gpu
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # - name: Check GPU direct nvidia-smi
+      #   run: |
+      #     nvidia-smi -L
+          
+      - name: Check GPU through docker run
+        run: |
+          # docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu22.04 bash -c "nvidia-smi -L"
+          docker run --rm --gpus all nvidia/cuda:12.6.0-base-ubuntu22.04 \
+          bash -c "while true; do echo \"--- \$(date) -----\"; sleep 5; done"
+         
+      # - name: Sleep
+      #   run: sleep 60000
