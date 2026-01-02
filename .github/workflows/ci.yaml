@@ -12,7 +12,8 @@ concurrency:
 
 jobs:
   run-notebook:
-    runs-on: arc-runner-set-oke-org-poc-2-gpu
+    #runs-on: arc-runner-set-oke-org-poc-2-gpu
+    runs-on: arc-runner-set-oke-org-poc-1.34-4-gpu
     env:
       NOTEBOOK_PATH: ./launchable/PDFtoPodcast.ipynb
       PYTHON_VERSION: 3.12
